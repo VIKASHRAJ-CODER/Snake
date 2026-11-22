@@ -112,7 +112,7 @@
       </div>
     </section>
     <footer class="bottom">
-      <div class="controls-copy"><strong>How to play</strong>Swipe the board or use the pad to steer. Eat the glowing fruit and avoid the walls.</div>
+      <div class="controls-copy"><strong>How to play</strong>Tap or swipe the board, or use the pad to steer. Eat the glowing fruit and avoid the walls.</div>
       <div>
         <div class="dpad" aria-label="Touch controls">
           <button class="up" type="button" data-direction="up" aria-label="Move up">▲</button>
@@ -121,7 +121,7 @@
           <button class="right" type="button" data-direction="right" aria-label="Move right">▶</button>
           <button class="down" type="button" data-direction="down" aria-label="Move down">▼</button>
         </div>
-        <div class="hint">SWIPE · D-PAD · ARROW KEYS</div>
+        <div class="hint">TAP · SWIPE · D-PAD</div>
       </div>
     </footer>
   </main>
@@ -312,6 +312,10 @@
       }));
       document.getElementById("pauseButton").addEventListener("click", pause);
       document.getElementById("restartButton").addEventListener("click", start);
+      message.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        if (state !== "playing") pause();
+      });
       document.getElementById("fullscreenButton").addEventListener("click", async () => {
         try {
           if (document.fullscreenElement) await document.exitFullscreen();
@@ -337,7 +341,19 @@
         const dx = event.clientX - touchStartX;
         const dy = event.clientY - touchStartY;
         if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) {
-          if (state !== "playing") pause();
+          if (state !== "playing") {
+            pause();
+            return;
+          }
+          const bounds = canvas.getBoundingClientRect();
+          const tapX = (event.clientX - bounds.left) * cols / bounds.width;
+          const tapY = (event.clientY - bounds.top) * rows / bounds.height;
+          const headX = snake[0].x + .5;
+          const headY = snake[0].y + .5;
+          const targetX = tapX - headX;
+          const targetY = tapY - headY;
+          if (Math.abs(targetX) > Math.abs(targetY)) turn(targetX > 0 ? 1 : -1, 0);
+          else if (targetY !== 0) turn(0, targetY > 0 ? 1 : -1);
           return;
         }
         if (Math.abs(dx) > Math.abs(dy)) turn(dx > 0 ? 1 : -1, 0);
